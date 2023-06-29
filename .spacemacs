@@ -32,7 +32,11 @@ This function should only modify configuration layer settings."
 
    ;; List of configuration layers to load.
    dotspacemacs-configuration-layers
-   '(javascript
+   '(restclient
+     python
+     html
+     sql
+     javascript
      vimscript
      yaml
      (fsharp :variables
@@ -56,6 +60,7 @@ This function should only modify configuration layer settings."
      multiple-cursors
      ;; org
      (shell :variables
+            shell-default-shell 'vterm
             shell-default-height 30
             shell-default-position 'bottom)
      ;; spell-checking
@@ -80,9 +85,12 @@ This function should only modify configuration layer settings."
    ;; `dotspacemacs/user-config'. To use a local version of a package, use the
    ;; `:location' property: '(your-package :location "~/path/to/your-package/")
    ;; Also include the dependencies as they will not be resolved automatically.
-   dotspacemacs-additional-packages '((eglot)
-                                      (eglot-fsharp)
-                                      (beacon))
+   dotspacemacs-additional-packages '(
+                                      ;; (eglot)
+                                      ;; (eglot-fsharp)
+                                      (dap-netcore)
+                                      (beacon)
+                                      (no-littering))
 
    ;; A list of packages that cannot be updated.
    dotspacemacs-frozen-packages '()
@@ -574,6 +582,12 @@ This function is called immediately after `dotspacemacs/init', before layer
 configuration.
 It is mostly for variables that should be set before packages are loaded.
 If you are unsure, try setting them in `dotspacemacs/user-config' first."
+
+  ;; NOTE: If you want to move everything out of the ~/.emacs.d folder
+  ;; reliably, set `user-emacs-directory` before loading no-littering!
+  (setq user-emacs-directory "~/.cache/emacs")
+  (setq dotspacemacs-distinguish-gui-tab t)
+
 )
 
 
@@ -592,21 +606,42 @@ configuration.
 Put your configuration code here, except for variables that should be set
 before packages are loaded."
 
+  (use-package no-littering)
+
+  ;; no-littering doesn't set this by default so we must place
+  ;; auto save files in the same path as it uses for sessions
+  ;; (setq auto-save-file-name-transforms
+  ;;       `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+
   (use-package vterm
     :custom (vterm-install t))
 
-  (require 'eglot)
-  ;; Do not show inlay hints
-  (add-to-list 'eglot-ignored-server-capabilities :inlayHintProvider)
+  ;; (require 'eglot)
+  ;; ;; Do not show inlay hints
+  ;; (add-to-list 'eglot-ignored-server-capabilities :inlayHintProvider)
+
+  (setq dotspacemacs-show-trailing-whitespace nil)
 
   (beacon-mode 1)
 
-  (customize-set-variable 'evil-want-Y-yank-to-eol t)
-
   (define-key evil-normal-state-map (kbd "C-j") 'evil-window-down)
-  (define-key evil-normal-state-map (kbd "C-k") 'evil-window-up)
+  (define-key evil-normal-state-map (kbd "C-k") 'evil-window-up) ;
   (define-key evil-normal-state-map (kbd "C-l") 'evil-window-right)
   (define-key evil-normal-state-map (kbd "C-h") 'evil-window-left)
+
+  (define-key evil-normal-state-map (kbd "C-p") 'helm-projectile)
+
+  (customize-set-variable 'evil-want-Y-yank-to-eol t)
+
+  (setq-default tab-width 4)
+  (setq-default indent-tabs-mode nil)
+
+  (add-hook 'fsharp-mode-hook
+            (lambda ()
+              (setq-default indent-tabs-mode nil)
+              (setq-default fsharp-indent-offset 4)
+              (require 'dap-netcore)))
+
 
 )
 
@@ -626,7 +661,7 @@ This function is called at the very end of Spacemacs initialization."
  '(custom-safe-themes
    '("bffa9739ce0752a37d9b1eee78fc00ba159748f50dc328af4be661484848e476" default))
  '(package-selected-packages
-   '(json-mode json-navigator hierarchy json-reformat json-snatcher add-node-modules-path dap-mode lsp-docker bui impatient-mode htmlize import-js grizzl js-doc js2-refactor multiple-cursors livid-mode nodejs-repl npm-mode prettier-js skewer-mode js2-mode simple-httpd tern web-beautify omnisharp csharp-mode eldoc beacon ranger company-nixos-options flycheck-pos-tip pos-tip helm-lsp helm-nixos-options lsp-origami origami lsp-treemacs lsp-ui lsp-mode nix-mode nixos-options dactyl-mode vimrc-mode ligature unicode-fonts ucs-utils font-utils persistent-soft pcache yaml-mode esh-help eshell-prompt-extras eshell-z multi-term multi-vterm shell-pop terminal-here vterm xterm-color ac-ispell auto-complete auto-yasnippet forge yaml markdown-mode ghub closql emacsql treepy fuzzy git-link git-messenger git-modes git-timemachine gitignore-templates helm-c-yasnippet helm-company helm-git-grep helm-ls-git smeargle treemacs-magit magit magit-section git-commit with-editor transient yasnippet-snippets yasnippet company counsel-gtags counsel swiper ivy eglot-fsharp eglot external-completion project jsonrpc xref fsharp-mode ggtags helm-gtags ws-butler writeroom-mode winum which-key volatile-highlights vim-powerline vi-tilde-fringe uuidgen use-package undo-tree treemacs-projectile treemacs-persp treemacs-icons-dired treemacs-evil toc-org term-cursor symon symbol-overlay string-inflection string-edit-at-point spacemacs-whitespace-cleanup spacemacs-purpose-popwin spaceline-all-the-icons space-doc restart-emacs request rainbow-delimiters quickrun popwin pcre2el password-generator paradox overseer org-superstar open-junk-file nameless multi-line macrostep lorem-ipsum link-hint inspector info+ indent-guide hybrid-mode hungry-delete holy-mode hl-todo highlight-parentheses highlight-numbers highlight-indentation hide-comnt help-fns+ helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org helm-mode-manager helm-make helm-descbinds helm-ag google-translate golden-ratio font-lock+ flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-evilified-state evil-escape evil-easymotion evil-collection evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav elisp-def editorconfig dumb-jump drag-stuff dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line)))
+   '(company-restclient know-your-http-well ob-http ob-restclient restclient-helm restclient blacken code-cells company-anaconda anaconda-mode cython-mode helm-cscope helm-pydoc importmagic epc ctable concurrent deferred live-py-mode lsp-pyright lsp-python-ms nose pip-requirements pipenv load-env-vars pippel poetry py-isort pydoc pyenv-mode pythonic pylookup pytest pyvenv sphinx-doc stickyfunc-enhance xcscope yapfify company-web web-completion-data counsel-css emmet-mode helm-css-scss pug-mode sass-mode haml-mode scss-mode slim-mode tagedit web-mode sql-indent sqlup-mode json-mode json-navigator hierarchy json-reformat json-snatcher add-node-modules-path dap-mode lsp-docker bui impatient-mode htmlize import-js grizzl js-doc js2-refactor multiple-cursors livid-mode nodejs-repl npm-mode prettier-js skewer-mode js2-mode simple-httpd tern web-beautify omnisharp csharp-mode eldoc beacon ranger company-nixos-options flycheck-pos-tip pos-tip helm-lsp helm-nixos-options lsp-origami origami lsp-treemacs lsp-ui lsp-mode nix-mode nixos-options dactyl-mode vimrc-mode ligature unicode-fonts ucs-utils font-utils persistent-soft pcache yaml-mode esh-help eshell-prompt-extras eshell-z multi-term multi-vterm shell-pop terminal-here vterm xterm-color ac-ispell auto-complete auto-yasnippet forge yaml markdown-mode ghub closql emacsql treepy fuzzy git-link git-messenger git-modes git-timemachine gitignore-templates helm-c-yasnippet helm-company helm-git-grep helm-ls-git smeargle treemacs-magit magit magit-section git-commit with-editor transient yasnippet-snippets yasnippet company counsel-gtags counsel swiper ivy eglot-fsharp eglot external-completion project jsonrpc xref fsharp-mode ggtags helm-gtags ws-butler writeroom-mode winum which-key volatile-highlights vim-powerline vi-tilde-fringe uuidgen use-package undo-tree treemacs-projectile treemacs-persp treemacs-icons-dired treemacs-evil toc-org term-cursor symon symbol-overlay string-inflection string-edit-at-point spacemacs-whitespace-cleanup spacemacs-purpose-popwin spaceline-all-the-icons space-doc restart-emacs request rainbow-delimiters quickrun popwin pcre2el password-generator paradox overseer org-superstar open-junk-file nameless multi-line macrostep lorem-ipsum link-hint inspector info+ indent-guide hybrid-mode hungry-delete holy-mode hl-todo highlight-parentheses highlight-numbers highlight-indentation hide-comnt help-fns+ helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-org helm-mode-manager helm-make helm-descbinds helm-ag google-translate golden-ratio font-lock+ flycheck-package flycheck-elsa flx-ido fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-evilified-state evil-escape evil-easymotion evil-collection evil-cleverparens evil-args evil-anzu eval-sexp-fu emr elisp-slime-nav elisp-def editorconfig dumb-jump drag-stuff dotenv-mode dired-quick-sort diminish devdocs define-word column-enforce-mode clean-aindent-mode centered-cursor-mode auto-highlight-symbol auto-compile aggressive-indent ace-link ace-jump-helm-line)))
 (custom-set-faces
  ;; custom-set-faces was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.
