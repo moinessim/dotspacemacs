@@ -88,7 +88,6 @@ This function should only modify configuration layer settings."
    dotspacemacs-additional-packages '(
                                       ;; (eglot)
                                       ;; (eglot-fsharp)
-                                      (dap-netcore)
                                       (beacon)
                                       (no-littering))
 
@@ -639,8 +638,7 @@ before packages are loaded."
   (add-hook 'fsharp-mode-hook
             (lambda ()
               (setq-default indent-tabs-mode nil)
-              (setq-default fsharp-indent-offset 4)
-              (require 'dap-netcore)))
+              (setq-default fsharp-indent-offset 4)))
 
 
 )
